@@ -34,6 +34,9 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 
+[tool.setuptools.package-data]
+"crimson.folder_sync.load_script" = ["*"]
+
 [project.urls]
 "Homepage" = "https://github.com/crimson206/folder-sync"
 "Bug Tracker" = "https://github.com/crimson206/folder-sync/issues"
