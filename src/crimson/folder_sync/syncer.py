@@ -1,44 +1,57 @@
 import os
 import shutil
 from watchdog.observers import Observer
-from .move_handler import MoveHandler
-from typing import List, Union, Generic, TypeVar
+from .sync_handler import SyncHandler
+from typing import List, Union, TypeVar, Annotated
 import time
 import threading
+from .logger import get_logger
+
+
+logger = get_logger("FolderSyncer")
 
 TypeHolder = TypeVar("TypeHolder")
 
 
-class SourceDir_(str, Generic[TypeHolder]):
-    """
-    Docstring
-    """
+Include = Annotated[
+    Union[str, List[str]],
+    "pattern(s) of paths to sync.",
+    {
+        "description": "{summary}\n For the search logic, it use [fnmatch](https://docs.python.org/3/library/fnmatch.html)",
+    },
+]
+
+Exclude = Annotated[
+    Union[str, List[str]],
+    "pattern(s) of paths to exclude from the sync.",
+    {
+        "description": "{summary}\n For the search logic, it use [fnmatch](https://docs.python.org/3/library/fnmatch.html)",
+    },
+]
+
+SourceDir = Annotated[str, "The source directory to sync."]
+
+OutputDir = Annotated[str, "The files from `SourceDir` are moved here."]
 
 
-class FolderSyncer:
+class FolderSync:
     """
-    이 함수는 특별한 작업을 수행합니다.
-
-    see: :class:`crimson.folder_sync.move_handler.MoveHandler`
+    It watches the source_dir, and move the files if changes are detected.
     """
 
     def __init__(
         self,
-        source_dir: SourceDir_[str],
-        output_dir: str,
-        include: Union[str, List[str]] = [],
-        exclude: Union[str, List[str]] = [],
+        source_dir: SourceDir,
+        output_dir: OutputDir,
+        include: Include = [],
+        exclude: Exclude = [],
     ):
-        """
-        Some Docstring
-
-        see: class:`crimson.folder_sync.move_handler.MoveHandler`
-        """
-        self.source_dir = os.path.abspath(source_dir)
+        self.logger = logger
+        self.source_dir = source_dir
         self.output_dir = output_dir
         self.include = include
         self.exclude = exclude
-        self.event_handler = MoveHandler(source_dir, output_dir, include, exclude)
+        self.event_handler = SyncHandler(source_dir, output_dir, include, exclude)
         self.observer = Observer()
         self.observer.schedule(self.event_handler, path=self.source_dir, recursive=True)
         self.is_running = False
@@ -46,14 +59,13 @@ class FolderSyncer:
 
     def start(self):
         """
-        start function
         """
         if not self.is_running:
             self.observer.start()
             self.is_running = True
             self.thread = threading.Thread(target=self._run)
             self.thread.start()
-            print(f"Watching '{self.source_dir}' for changes...")
+            logger.info(f"Watching '{self.source_dir}' for changes...")
 
     def stop(self):
         """
@@ -65,7 +77,7 @@ class FolderSyncer:
             self.observer.join()
             if self.thread:
                 self.thread.join()
-            print("Stopped watching for changes.")
+            logger.info("Stopped watching for changes.")
 
     def _run(self):
         try:
@@ -78,9 +90,9 @@ class FolderSyncer:
         """
         force sync
         """
-        print("Performing initial sync...")
+        logger.info("Performing initial sync...")
         initial_sync(self.source_dir, self.output_dir)
-        print("Initial sync completed.")
+        logger.info("Initial sync completed.")
 
 
 def use_folder_syncer(
@@ -89,12 +101,11 @@ def use_folder_syncer(
     include: Union[str, List[str]] = [],
     exclude: Union[str, List[str]] = [],
     initial_sync_flag: bool = False,
-    dummy: MoveHandler = None,
-) -> FolderSyncer:
+) -> FolderSync:
     if not os.path.exists(source_dir):
         raise FileNotFoundError(f"Source path '{source_dir}' does not exist.")
 
-    handler = FolderSyncer(source_dir, output_dir, include, exclude)
+    handler = FolderSync(source_dir, output_dir, include, exclude)
 
     if initial_sync_flag:
         handler.perform_initial_sync()
@@ -114,6 +125,6 @@ def initial_sync(source_dir: str, output_dir: str) -> None:
 
             try:
                 shutil.copy2(src_path, dst_path)
-                print(f"Synced '{src_path}' to '{dst_path}'.")
+                logger.info(f"Synced '{src_path}' to '{dst_path}'.")
             except Exception as e:
-                print(f"Error occurred while syncing file: {e}")
+                logger.info(f"Error occurred while syncing file: {e}")
