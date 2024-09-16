@@ -1,0 +1,46 @@
+{% extends "!layout.html" %}
+
+{% block footer %}
+{{ super() }}
+<script>
+    function initSourceDirHover() {
+        console.log("Initializing SourceDir hover effect");
+        
+        // SourceDir_ 텍스트를 포함하는 모든 span 요소 선택
+        var sourceDirSpans = document.querySelectorAll('span.pre');
+        console.log("Found " + sourceDirSpans.length + " potential SourceDir_ spans");
+    
+        sourceDirSpans.forEach(function(span) {
+            if (span.textContent.includes('SourceDir_')) {
+                console.log("Match found: ", span);
+                span.addEventListener('mouseover', function(event) {
+                    console.log("Mouseover event triggered");
+                    var tooltip = document.createElement('div');
+                    tooltip.textContent = 'This is SourceDir_!';
+                    tooltip.style.position = 'absolute';
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY + 10) + 'px';
+                    tooltip.style.backgroundColor = 'yellow';
+                    tooltip.style.border = '1px solid black';
+                    tooltip.style.padding = '5px';
+                    tooltip.style.zIndex = '1000';
+                    document.body.appendChild(tooltip);
+                    
+                    var removeTooltip = function() {
+                        tooltip.remove();
+                        span.removeEventListener('mouseout', removeTooltip);
+                    };
+                    
+                    span.addEventListener('mouseout', removeTooltip);
+                });
+            }
+        });
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSourceDirHover);
+    } else {
+        initSourceDirHover();
+    }
+    </script>
+{% endblock %}
