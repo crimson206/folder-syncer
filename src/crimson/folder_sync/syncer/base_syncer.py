@@ -1,11 +1,11 @@
 import os
 import shutil
 from watchdog.observers import Observer
-from .sync_handler import SyncHandler
+from crimson.folder_sync.sync_handlers.sync_handler import SyncHandler
 from typing import List, Union, TypeVar, Annotated
 import time
 import threading
-from .logger import get_logger
+from ..logger import get_logger
 
 
 logger = get_logger("FolderSyncer")
@@ -34,7 +34,7 @@ SourceDir = Annotated[str, "The source directory to sync."]
 OutputDir = Annotated[str, "The files from `SourceDir` are moved here."]
 
 
-class FolderSync:
+class FolderSyncer:
     """
     It watches the source_dir, and move the files if changes are detected.
     """
@@ -91,26 +91,8 @@ class FolderSync:
         force sync
         """
         logger.info("Performing initial sync...")
-        initial_sync(self.source_dir, self.output_dir)
+        self.event_handler.initial_sync()
         logger.info("Initial sync completed.")
-
-
-def use_folder_syncer(
-    source_dir: str,
-    output_dir: str,
-    include: Union[str, List[str]] = [],
-    exclude: Union[str, List[str]] = [],
-    initial_sync_flag: bool = False,
-) -> FolderSync:
-    if not os.path.exists(source_dir):
-        raise FileNotFoundError(f"Source path '{source_dir}' does not exist.")
-
-    handler = FolderSync(source_dir, output_dir, include, exclude)
-
-    if initial_sync_flag:
-        handler.perform_initial_sync()
-
-    return handler
 
 
 def initial_sync(source_dir: str, output_dir: str) -> None:
@@ -128,3 +110,21 @@ def initial_sync(source_dir: str, output_dir: str) -> None:
                 logger.info(f"Synced '{src_path}' to '{dst_path}'.")
             except Exception as e:
                 logger.info(f"Error occurred while syncing file: {e}")
+
+
+def use_folder_syncer(
+    source_dir: str,
+    output_dir: str,
+    include: Union[str, List[str]] = [],
+    exclude: Union[str, List[str]] = [],
+    initial_sync_flag: bool = False,
+) -> FolderSyncer:
+    if not os.path.exists(source_dir):
+        raise FileNotFoundError(f"Source path '{source_dir}' does not exist.")
+
+    handler = FolderSyncer(source_dir, output_dir, include, exclude)
+
+    if initial_sync_flag:
+        handler.perform_initial_sync()
+
+    return handler

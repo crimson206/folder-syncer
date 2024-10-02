@@ -143,7 +143,8 @@ options = Options(
 )
 
 dependencies = [
-    "watchdog"
+    "watchdog",
+    "crimson-filter-beta==0.1.0"
 ]
 
 

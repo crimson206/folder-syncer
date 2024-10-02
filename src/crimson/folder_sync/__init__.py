@@ -1,1 +1,3 @@
-# Init file for the module
+"""
+from crimson.folder_sync.syncer import FolderSyncer
+"""

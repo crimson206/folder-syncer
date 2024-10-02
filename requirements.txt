@@ -1,1 +1,2 @@
 watchdog
+crimson-filter-beta==0.1.0
