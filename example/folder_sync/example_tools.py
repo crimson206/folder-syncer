@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Dict
 import sys
 from crimson.folder_sync.logger import get_logger
 
@@ -44,13 +44,11 @@ def delete_dir(dir: str):
         logger.info(f"Path, {dir}, doesn't exist.")
 
 
-def get_example_dirs() -> ExampleDirs:
-    return (SOURCE_DIR, dir)
-
-
-def generate_source_dir():
+def generate_dir(
+    dir: str, source_contents: Dict[str, str] = source_contents
+):
     for relative_path, content in source_contents.items():
-        path = f'{SOURCE_DIR}/{relative_path.replace("./", "")}'
+        path = f'{dir}/{relative_path.replace("./", "")}'
         if not os.path.exists(get_dir(path)):
             os.makedirs(get_dir(path))
 

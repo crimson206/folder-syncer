@@ -1,1 +1,2 @@
 from crimson.folder_sync.syncer.base_syncer import FolderSyncer
+from crimson.folder_sync.syncer.editable_syncer import EditableFolderSyncer

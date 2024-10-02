@@ -1,5 +1,4 @@
 import os
-import shutil
 from watchdog.observers import Observer
 from crimson.folder_sync.sync_handlers.sync_handler import SyncHandler
 from typing import List, Union, TypeVar, Annotated
@@ -58,8 +57,7 @@ class FolderSyncer:
         self.thread = None
 
     def start(self):
-        """
-        """
+        """ """
         if not self.is_running:
             self.observer.start()
             self.is_running = True
@@ -86,30 +84,13 @@ class FolderSyncer:
         except KeyboardInterrupt:
             self.stop()
 
-    def perform_initial_sync(self):
+    def refresh_sync(self, clean_target=False):
         """
         force sync
         """
-        logger.info("Performing initial sync...")
-        self.event_handler.initial_sync()
-        logger.info("Initial sync completed.")
-
-
-def initial_sync(source_dir: str, output_dir: str) -> None:
-    for root, dirs, files in os.walk(source_dir):
-        for file in files:
-            src_path: str = os.path.join(root, file)
-            relative_path: str = os.path.relpath(src_path, source_dir)
-            dst_path: str = os.path.join(output_dir, relative_path)
-
-            if not os.path.exists(os.path.dirname(dst_path)):
-                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-
-            try:
-                shutil.copy2(src_path, dst_path)
-                logger.info(f"Synced '{src_path}' to '{dst_path}'.")
-            except Exception as e:
-                logger.info(f"Error occurred while syncing file: {e}")
+        logger.info("Performing Refresh sync...")
+        self.event_handler.refresh_sync(clean_target=clean_target)
+        logger.info("Refresh sync completed.")
 
 
 def use_folder_syncer(
@@ -125,6 +106,6 @@ def use_folder_syncer(
     handler = FolderSyncer(source_dir, output_dir, include, exclude)
 
     if initial_sync_flag:
-        handler.perform_initial_sync()
+        handler.refresh_sync()
 
     return handler
