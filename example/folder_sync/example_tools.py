@@ -62,4 +62,5 @@ def get_dir_structure(directory):
             rel_path = os.path.relpath(os.path.join(root, file), directory)
 
             dir_structure[rel_path] = open(directory + "/" + rel_path).read()
-    return dir_structure
+    sorted_dir_structure = dict(sorted(dir_structure.items()))
+    return sorted_dir_structure
