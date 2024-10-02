@@ -1,11 +1,10 @@
 import os
-import shutil
 from watchdog.observers import Observer
-from .sync_handler import SyncHandler
+from crimson.folder_sync.sync_handlers.sync_handler import SyncHandler
 from typing import List, Union, TypeVar, Annotated
 import time
 import threading
-from .logger import get_logger
+from ..logger import get_logger
 
 
 logger = get_logger("FolderSyncer")
@@ -34,7 +33,7 @@ SourceDir = Annotated[str, "The source directory to sync."]
 OutputDir = Annotated[str, "The files from `SourceDir` are moved here."]
 
 
-class FolderSync:
+class FolderSyncer:
     """
     It watches the source_dir, and move the files if changes are detected.
     """
@@ -58,8 +57,7 @@ class FolderSync:
         self.thread = None
 
     def start(self):
-        """
-        """
+        """ """
         if not self.is_running:
             self.observer.start()
             self.is_running = True
@@ -86,13 +84,13 @@ class FolderSync:
         except KeyboardInterrupt:
             self.stop()
 
-    def perform_initial_sync(self):
+    def refresh_sync(self, clean_target=False):
         """
         force sync
         """
-        logger.info("Performing initial sync...")
-        initial_sync(self.source_dir, self.output_dir)
-        logger.info("Initial sync completed.")
+        logger.info("Performing Refresh sync...")
+        self.event_handler.refresh_sync(clean_target=clean_target)
+        logger.info("Refresh sync completed.")
 
 
 def use_folder_syncer(
@@ -101,30 +99,13 @@ def use_folder_syncer(
     include: Union[str, List[str]] = [],
     exclude: Union[str, List[str]] = [],
     initial_sync_flag: bool = False,
-) -> FolderSync:
+) -> FolderSyncer:
     if not os.path.exists(source_dir):
         raise FileNotFoundError(f"Source path '{source_dir}' does not exist.")
 
-    handler = FolderSync(source_dir, output_dir, include, exclude)
+    handler = FolderSyncer(source_dir, output_dir, include, exclude)
 
     if initial_sync_flag:
-        handler.perform_initial_sync()
+        handler.refresh_sync()
 
     return handler
-
-
-def initial_sync(source_dir: str, output_dir: str) -> None:
-    for root, dirs, files in os.walk(source_dir):
-        for file in files:
-            src_path: str = os.path.join(root, file)
-            relative_path: str = os.path.relpath(src_path, source_dir)
-            dst_path: str = os.path.join(output_dir, relative_path)
-
-            if not os.path.exists(os.path.dirname(dst_path)):
-                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-
-            try:
-                shutil.copy2(src_path, dst_path)
-                logger.info(f"Synced '{src_path}' to '{dst_path}'.")
-            except Exception as e:
-                logger.info(f"Error occurred while syncing file: {e}")
